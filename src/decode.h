@@ -671,9 +671,6 @@ extern uint32_t default_packet_size;
 /** \brief Structure to hold thread specific data for all decode modules */
 typedef struct DecodeThreadVars_
 {
-    /** Specific context for udp protocol detection (here atm) */
-    AppLayerThreadCtx *app_tctx;
-
     /** stats/counters */
     uint16_t counter_pkts;
     uint16_t counter_bytes;
