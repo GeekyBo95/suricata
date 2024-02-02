@@ -296,6 +296,7 @@ noinst_HEADERS = \
 	detect-sip-uri.h \
 	detect-smb-ntlmssp.h \
 	detect-smb-share.h \
+	detect-smb-version.h \
 	detect-snmp-community.h \
 	detect-snmp-pdu_type.h \
 	detect-snmp-usm.h \
@@ -349,6 +350,7 @@ noinst_HEADERS = \
 	detect-transform-pcrexform.h \
 	detect-transform-sha1.h \
 	detect-transform-sha256.h \
+	detect-transform-strip-pseudo-headers.h \
 	detect-transform-strip-whitespace.h \
 	detect-transform-urldecode.h \
 	detect-transform-xor.h \
@@ -554,6 +556,7 @@ noinst_HEADERS = \
 	util-hash-string.h \
 	util-host-info.h \
 	util-host-os-info.h \
+	util-hugepages.h \
 	util-hyperscan.h \
 	util-ioctl.h \
 	util-ip.h \
@@ -911,6 +914,7 @@ libsuricata_c_a_SOURCES = \
 	detect-sip-uri.c \
 	detect-smb-ntlmssp.c \
 	detect-smb-share.c \
+	detect-smb-version.c \
 	detect-snmp-community.c \
 	detect-snmp-pdu_type.c \
 	detect-snmp-usm.c \
@@ -964,6 +968,7 @@ libsuricata_c_a_SOURCES = \
 	detect-transform-pcrexform.c \
 	detect-transform-sha1.c \
 	detect-transform-sha256.c \
+	detect-transform-strip-pseudo-headers.c \
 	detect-transform-strip-whitespace.c \
 	detect-transform-urldecode.c \
 	detect-transform-xor.c \
@@ -1155,6 +1160,7 @@ libsuricata_c_a_SOURCES = \
 	util-hash-string.c \
 	util-host-info.c \
 	util-host-os-info.c \
+	util-hugepages.c \
 	util-hyperscan.c \
 	util-ioctl.c \
 	util-ip.c \

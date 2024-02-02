@@ -202,6 +202,12 @@ static int DetectEngineContentInspectionTest08(void) {
     TEST_RUN("abcdefghy", 9,
             "content:\"a\"; content:!\"x\"; content:!\"c\"; distance:2; within:1; ", true, 3);
 
+    TEST_RUN("aaabbbccc", 9, "content:\"ccc\"; endswith; content:!\"bccc\"; endswith; ", false, 2);
+    TEST_RUN("aaabbbccc", 9, "content:\"ccc\"; endswith; content:!\"accc\"; endswith; ", true, 2);
+    TEST_RUN("aaabbbccc", 9, "content:\"ccc\"; endswith; content:!\"bccc\"; endswith; depth:4; ",
+            true, 2);
+    TEST_RUN("aaabbbccc", 9, "content:\"ccc\"; endswith; content:!\"bccc\"; endswith; depth:9; ",
+            false, 2);
     TEST_FOOTER;
 }
 
@@ -283,6 +289,31 @@ static int DetectEngineContentInspectionTest13(void) {
     TEST_FOOTER;
 }
 
+static int DetectEngineContentInspectionTest14(void)
+{
+    TEST_HEADER;
+    TEST_RUN("XYZ_klm_1234abcd_XYZ_klm_5678abcd", 33,
+            "content:\"XYZ\"; content:\"_klm_\"; distance:0; content:\"abcd\"; distance:4; "
+            "byte_test:4,=,1234,-8,relative,string;",
+            true, 4);
+    TEST_RUN("XYZ_klm_1234abcd_XYZ_klm_5678abcd", 33,
+            "content:\"XYZ\"; content:\"_klm_\"; distance:0; content:\"abcd\"; distance:4; "
+            "byte_test:4,=,5678,-8,relative,string;",
+            true, 5);
+    TEST_FOOTER;
+}
+
+/** \brief negative distance */
+static int DetectEngineContentInspectionTest17(void)
+{
+    TEST_HEADER;
+    TEST_RUN("aaabbbcccdddee", 14,
+            "content:\"aaa\"; content:\"ee\"; within:2; distance:9; content:\"bbb\"; within:3; "
+            "distance:-11; content:\"ccc\"; within:3; distance:0;",
+            true, 4);
+    TEST_FOOTER;
+}
+
 void DetectEngineContentInspectionRegisterTests(void)
 {
     UtRegisterTest("DetectEngineContentInspectionTest01",
@@ -311,6 +342,10 @@ void DetectEngineContentInspectionRegisterTests(void)
                    DetectEngineContentInspectionTest12);
     UtRegisterTest("DetectEngineContentInspectionTest13 mix startswith/endswith",
                    DetectEngineContentInspectionTest13);
+    UtRegisterTest("DetectEngineContentInspectionTest14 byte_test negative offset",
+            DetectEngineContentInspectionTest14);
+    UtRegisterTest("DetectEngineContentInspectionTest17 negative distance",
+            DetectEngineContentInspectionTest17);
 }
 
 #undef TEST_HEADER

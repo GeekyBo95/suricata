@@ -337,7 +337,7 @@ static int DetectEngineContentInspectionInternal(DetectEngineThreadCtx *det_ctx,
 
             if ((cd->flags & DETECT_CONTENT_ENDS_WITH) == 0 || match_offset == buffer_len) {
                 /* Match branch, add replace to the list if needed */
-                if (cd->flags & DETECT_CONTENT_REPLACE) {
+                if (unlikely(cd->flags & DETECT_CONTENT_REPLACE)) {
                     if (inspection_mode == DETECT_ENGINE_CONTENT_INSPECTION_MODE_PAYLOAD) {
                         /* we will need to replace content if match is confirmed
                          * cast to non-const as replace writes to it. */
@@ -594,8 +594,7 @@ static int DetectEngineContentInspectionInternal(DetectEngineThreadCtx *det_ctx,
             nbytes = bmd->nbytes;
         }
 
-        DEBUG_VALIDATE_BUG_ON(buffer_len > UINT16_MAX);
-        if (DetectByteMathDoMatch(det_ctx, bmd, s, buffer, (uint16_t)buffer_len, nbytes, rvalue,
+        if (DetectByteMathDoMatch(det_ctx, bmd, s, buffer, buffer_len, nbytes, rvalue,
                     &det_ctx->byte_values[bmd->local_id], endian) != 1) {
             goto no_match;
         }

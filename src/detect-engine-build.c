@@ -434,43 +434,11 @@ PacketCreateMask(Packet *p, SignatureMask *mask, AppProto alproto,
         SCLogDebug("packet has flow");
         (*mask) |= SIG_MASK_REQUIRE_FLOW;
     }
-
-    if (alproto == ALPROTO_SMB || alproto == ALPROTO_DCERPC) {
-        SCLogDebug("packet will be inspected for DCERPC");
-        (*mask) |= SIG_MASK_REQUIRE_DCERPC;
-    }
-}
-
-static int g_dce_generic_list_id = -1;
-static int g_dce_stub_data_buffer_id = -1;
-
-static bool SignatureNeedsDCERPCMask(const Signature *s)
-{
-    if (g_dce_generic_list_id == -1) {
-        g_dce_generic_list_id = DetectBufferTypeGetByName("dce_generic");
-        SCLogDebug("g_dce_generic_list_id %d", g_dce_generic_list_id);
-    }
-    if (g_dce_stub_data_buffer_id == -1) {
-        g_dce_stub_data_buffer_id = DetectBufferTypeGetByName("dce_stub_data");
-        SCLogDebug("g_dce_stub_data_buffer_id %d", g_dce_stub_data_buffer_id);
-    }
-
-    if (DetectBufferIsPresent(s, g_dce_generic_list_id) ||
-            DetectBufferIsPresent(s, g_dce_stub_data_buffer_id)) {
-        return true;
-    }
-
-    return false;
 }
 
 static int SignatureCreateMask(Signature *s)
 {
     SCEnter();
-
-    if (SignatureNeedsDCERPCMask(s)) {
-        s->mask |= SIG_MASK_REQUIRE_DCERPC;
-        SCLogDebug("sig requires DCERPC");
-    }
 
     if (s->init_data->smlists[DETECT_SM_LIST_PMATCH] != NULL) {
         s->mask |= SIG_MASK_REQUIRE_PAYLOAD;
@@ -1371,6 +1339,7 @@ void SignatureSetType(DetectEngineCtx *de_ctx, Signature *s)
     }
 }
 
+extern int g_skip_prefilter;
 /**
  * \brief Preprocess signature, classify ip-only, etc, build sig array
  *
@@ -1392,13 +1361,9 @@ int SigPrepareStage1(DetectEngineCtx *de_ctx)
     }
 
     de_ctx->sig_array_len = DetectEngineGetMaxSigId(de_ctx);
-    de_ctx->sig_array_size = (de_ctx->sig_array_len * sizeof(Signature *));
     de_ctx->sig_array = (Signature **)SCCalloc(de_ctx->sig_array_len, sizeof(Signature *));
     if (de_ctx->sig_array == NULL)
         goto error;
-
-    SCLogDebug("signature lookup array: %" PRIu32 " sigs, %" PRIu32 " bytes",
-               de_ctx->sig_array_len, de_ctx->sig_array_size);
 
     /* now for every rule add the source group */
     for (Signature *s = de_ctx->sig_list; s != NULL; s = s->next) {
@@ -1459,9 +1424,8 @@ int SigPrepareStage1(DetectEngineCtx *de_ctx)
         RuleSetWhitelist(s);
 
         /* if keyword engines are enabled in the config, handle them here */
-        if (de_ctx->prefilter_setting == DETECT_PREFILTER_AUTO &&
-                !(s->flags & SIG_FLAG_PREFILTER))
-        {
+        if (!g_skip_prefilter && de_ctx->prefilter_setting == DETECT_PREFILTER_AUTO &&
+                !(s->flags & SIG_FLAG_PREFILTER)) {
             int prefilter_list = DETECT_TBLSIZE;
 
             // TODO buffers?
@@ -1857,10 +1821,7 @@ int SigPrepareStage4(DetectEngineCtx *de_ctx)
 
         SCLogDebug("sgh %p", sgh);
 
-        SigGroupHeadSetFilemagicFlag(de_ctx, sgh);
-        SigGroupHeadSetFileHashFlag(de_ctx, sgh);
-        SigGroupHeadSetFilesizeFlag(de_ctx, sgh);
-        SigGroupHeadSetFilestoreCount(de_ctx, sgh);
+        SigGroupHeadSetupFiles(de_ctx, sgh);
         SCLogDebug("filestore count %u", sgh->filestore_cnt);
 
         PrefilterSetupRuleGroup(de_ctx, sgh);
